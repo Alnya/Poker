@@ -5,7 +5,7 @@ namespace Poker;
 public class Program
 {
     // 全カードのリスト
-    public static List<Card> CardList = [];
+    public static List<Card> CardList = new();
 
     private static void Main(string[] args)
     {
