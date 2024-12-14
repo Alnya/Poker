@@ -26,25 +26,32 @@ public class Program
         var resultDic = new Dictionary<string, Dictionary<Hand, double>>();
         Console.WriteLine("start");
 
-        // 確率全部出す
-        for (var i = 0; i < CardList.Count; i++)
-        {
-            for (var j = i + 1; j < CardList.Count; j++)
-            {
-                // マイハンド
-                var card1 = CardList[i];
-                var card2 = CardList[j];
-                var myHands = new HashSet<Card>
-                {
-                    card1,
-                    card2
-                };
-                // 空のハンド辞書
-                var dic = CreateHandDic();
-                (_, _, resultDic) = LoopInCount(myHands, dic, 0, resultDic);
-                Console.WriteLine($"card1:{card1.Name}, card2:{card2.Name}");
-            }
-        }
+        var cards = new HashSet<Card>();
+        // ハンド引く
+        PickOneRandom(cards);
+        PickOneRandom(cards);
+        // フロップ引く
+        PickOneRandom(cards);
+        PickOneRandom(cards);
+        PickOneRandom(cards);
+        // 空のハンド辞書
+        var dic = CreateHandDic();
+        (_, _, resultDic) = LoopInCount(cards, dic, 0, resultDic);
+        WriteProbability(cards, resultDic);
+
+        // ターン引く
+        PickOneRandom(cards);
+        dic = CreateHandDic();
+        (_, _, resultDic) = LoopInCount(cards, dic, 0, resultDic);
+        WriteProbability(cards, resultDic);
+
+
+        // リバー引く
+        PickOneRandom(cards);
+        dic = CreateHandDic();
+        (_, _, resultDic) = LoopInCount(cards, dic, 0, resultDic);
+        WriteProbability(cards, resultDic);
+
 
         var json = JsonSerializer.Serialize(resultDic);
 
@@ -110,7 +117,6 @@ public class Program
             // 確率を辞書に入れる
             var key = CreateProbabilityKey(originCards);
             resultDic[key] = probabilityDic;
-            Console.WriteLine($"key:{key}");
             return (originDic, originCount, resultDic);
         }
         else
@@ -146,6 +152,57 @@ public class Program
             resultDic[key] = probabilityDic;
             return (originDic, originCount, resultDic);
         }
+    }
+
+    /// <summary>
+    /// ランダムに一枚引く
+    /// </summary>
+    /// <returns></returns>
+    private static HashSet<Card> PickOneRandom(HashSet<Card> cards)
+    {
+        var random = new Random();
+        while (true)
+        {
+            var index = random.Next(0, CardList.Count);
+            var pickedCard = CardList[index];
+            var isContain = false;
+            foreach (var card in cards)
+            {
+                if (card.Suit == pickedCard.Suit && card.Num == pickedCard.Num)
+                {
+                    isContain = true;
+                    break;
+                }
+            }
+            if (isContain)
+            {
+                continue;
+            }
+            cards.Add(pickedCard);
+            break;
+        }
+        return cards;
+    }
+
+    /// <summary>
+    /// コンソールに出力する
+    /// </summary>
+    /// <param name="cards"></param>
+    private static void WriteProbability(HashSet<Card> cards, Dictionary<string, Dictionary<Hand, double>> resultDic)
+    {
+        var text = string.Empty;
+        foreach (var card in cards)
+        {
+            text += $"{card.Name} ";
+        }
+        text += $"\n{'{'}\n";
+        var result = resultDic[CreateProbabilityKey(cards)];
+        foreach (var key in result.Keys)
+        {
+            text += $"  {key}:{result[key] * 100},\n";
+        }
+        text += $"{'}'}\n";
+        Console.WriteLine(text);
     }
 
 
